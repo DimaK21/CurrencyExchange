@@ -5,7 +5,7 @@ import ru.kryu.currencyexchange.presentation.MainActivity
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [AppModule::class])
+@Component(modules = [AppModule::class, ViewModelModule::class])
 interface AppComponent {
     fun inject(activity: MainActivity)
 }

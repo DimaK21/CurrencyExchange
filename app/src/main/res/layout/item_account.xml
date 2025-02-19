@@ -5,20 +5,31 @@
     android:background="@drawable/card_background"
     android:gravity="fill_vertical"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:padding="16dp">
 
     <TextView
-        android:id="@+id/currency_name"
+        android:id="@+id/tvCurrency"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="EUR"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:text="USD"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:gravity="center"/>
 
     <TextView
-        android:id="@+id/account_balance"
+        android:id="@+id/tvBalance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="You have: 100.00€"
-        android:textSize="14sp" />
+        android:text="100.00"
+        android:textSize="14sp"
+        android:gravity="center"/>
+
+    <EditText
+        android:id="@+id/etAmount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/enter_summ"
+        android:inputType="numberDecimal"
+        android:gravity="center"
+        android:visibility="gone"/>
 </LinearLayout>
