@@ -1,10 +1,12 @@
 package ru.kryu.currencyexchange.di
 
+import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import dagger.Module
 import dagger.Provides
 import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import ru.kryu.currencyexchange.data.BalanceRepositoryImpl
 import ru.kryu.currencyexchange.data.ExchangeRateRepositoryImpl
 import ru.kryu.currencyexchange.data.network.ExchangeRateApi

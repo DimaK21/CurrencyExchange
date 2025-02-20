@@ -1,7 +1,6 @@
 package ru.kryu.currencyexchange.presentation
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -11,21 +10,21 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
 import ru.kryu.currencyexchange.App
-import ru.kryu.currencyexchange.R
 import ru.kryu.currencyexchange.databinding.ActivityMainBinding
 import ru.kryu.currencyexchange.di.MainViewModelFactory
 import javax.inject.Inject
 
 class MainActivity : AppCompatActivity() {
 
-    @Inject lateinit var viewModelFactory: MainViewModelFactory
+    @Inject
+    lateinit var viewModelFactory: MainViewModelFactory
     private val viewModel: MainViewModel by viewModels { viewModelFactory }
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var fromAccountAdapter: AccountAdapter
     private lateinit var toAccountAdapter: AccountAdapter
+    private val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         (application as App).appComponent.inject(this)
@@ -50,42 +49,46 @@ class MainActivity : AppCompatActivity() {
         toAccountAdapter = AccountAdapter(false)
 
         binding.recyclerAccountsFrom.apply {
-            layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.HORIZONTAL, false)
+            layoutManager =
+                LinearLayoutManager(this@MainActivity, LinearLayoutManager.HORIZONTAL, false)
             adapter = fromAccountAdapter
         }
 
         binding.recyclerAccountsTo.apply {
-            layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.HORIZONTAL, false)
+            layoutManager =
+                LinearLayoutManager(this@MainActivity, LinearLayoutManager.HORIZONTAL, false)
             adapter = toAccountAdapter
         }
     }
 
     private fun observeViewModel() {
-        viewModel.exchangeRateText
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { rateText ->
-                binding.exchangeRate.text = rateText
-            }
+        compositeDisposable.addAll(
+            viewModel.exchangeRateText
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({ rateText ->
+                    binding.exchangeRate.text = rateText
+                }, Throwable::printStackTrace),
 
-        viewModel.convertedAmount
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { convertedAmount ->
-                toAccountAdapter.updateConversionRate(convertedAmount)
-            }
+            viewModel.convertedAmount
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({ convertedAmount ->
+                    toAccountAdapter.updateConversionRate(convertedAmount)
+                }, Throwable::printStackTrace),
 
-        viewModel.balances
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { balances ->
-                val accountsList = balances.entries.toList()
-                fromAccountAdapter.submitList(accountsList)
-                toAccountAdapter.submitList(accountsList)
-            }
+            viewModel.balances
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({ balances ->
+                    val accountsList = balances.entries.toList()
+                    fromAccountAdapter.submitList(accountsList.map { it.key to it.value })
+                    toAccountAdapter.submitList(accountsList.map { it.key to it.value })
+                }, Throwable::printStackTrace),
 
-        viewModel.getExchangeResult()
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { message ->
-                showExchangeResultDialog(message)
-            }
+            viewModel.getExchangeResult()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({ message ->
+                    showExchangeResultDialog(message)
+                }, Throwable::printStackTrace)
+        )
     }
 
     private fun setupExchangeButton() {
@@ -101,5 +104,9 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
             .show()
     }
-}
+
+    override fun onDestroy() {
+        super.onDestroy()
+        compositeDisposable.clear()
+    }
 }

@@ -13,13 +13,15 @@ class AccountAdapter(
 ) : RecyclerView.Adapter<AccountAdapter.AccountViewHolder>() {
 
     private var accounts: List<Pair<String, Double>> = listOf()
-    private var selectedCurrency: String? = null
     private var convertedAmount: Double = 0.0
 
-    fun submitList(newAccounts: List<Pair<String, Double>>, selectedCurrency: String?, convertedAmount: Double = 0.0) {
+    fun submitList(newAccounts: List<Pair<String, Double>>) {
         this.accounts = newAccounts
-        this.selectedCurrency = selectedCurrency
-        this.convertedAmount = convertedAmount
+        notifyDataSetChanged()
+    }
+
+    fun updateConversionRate(newConvertedAmount: Double) {
+        this.convertedAmount = newConvertedAmount
         notifyDataSetChanged()
     }
 
@@ -30,7 +32,7 @@ class AccountAdapter(
 
     override fun onBindViewHolder(holder: AccountViewHolder, position: Int) {
         val (currency, balance) = accounts[position]
-        holder.bind(currency, balance, currency == selectedCurrency)
+        holder.bind(currency, balance)
     }
 
     override fun getItemCount(): Int = accounts.size
@@ -38,21 +40,19 @@ class AccountAdapter(
     inner class AccountViewHolder(private val binding: ItemAccountBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(currency: String, balance: Double, isSelected: Boolean) {
+        fun bind(currency: String, balance: Double) {
             binding.tvCurrency.text = currency
             binding.tvBalance.text = "Баланс: %.2f".format(balance)
 
+            binding.etAmount.visibility = if (isFromAccount) View.VISIBLE else View.GONE
+
             if (isFromAccount) {
-                binding.etAmount.visibility = View.VISIBLE
                 binding.etAmount.doAfterTextChanged { text ->
                     val amount = text.toString().toDoubleOrNull() ?: 0.0
                     onAmountEntered?.invoke(currency, amount)
                 }
             } else {
-                binding.etAmount.visibility = View.GONE
-                if (isSelected) {
-                    binding.tvBalance.text = "Баланс: %.2f (+%.2f)".format(balance, convertedAmount)
-                }
+                binding.tvBalance.text = "Баланс: %.2f (+%.2f)".format(balance, convertedAmount)
             }
         }
     }
