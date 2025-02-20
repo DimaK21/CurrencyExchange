@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.PagerSnapHelper
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import ru.kryu.currencyexchange.App
@@ -53,12 +54,17 @@ class MainActivity : AppCompatActivity() {
                 LinearLayoutManager(this@MainActivity, LinearLayoutManager.HORIZONTAL, false)
             adapter = fromAccountAdapter
         }
+        val fromSnapHelper = PagerSnapHelper()
+        fromSnapHelper.attachToRecyclerView(binding.recyclerAccountsFrom)
+
 
         binding.recyclerAccountsTo.apply {
             layoutManager =
                 LinearLayoutManager(this@MainActivity, LinearLayoutManager.HORIZONTAL, false)
             adapter = toAccountAdapter
         }
+        val toSnapHelper = PagerSnapHelper()
+        toSnapHelper.attachToRecyclerView(binding.recyclerAccountsTo)
     }
 
     private fun observeViewModel() {
