@@ -1,6 +1,5 @@
 package ru.kryu.currencyexchange.di
 
-import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import dagger.Module
@@ -17,11 +16,13 @@ import javax.inject.Singleton
 @Module
 object AppModule {
 
+    private const val BASE_URL = "https://www.cbr-xml-daily.ru/"
+
     @Provides
     @Singleton
     fun provideRetrofit(): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://www.cbr-xml-daily.ru/")
+            .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
