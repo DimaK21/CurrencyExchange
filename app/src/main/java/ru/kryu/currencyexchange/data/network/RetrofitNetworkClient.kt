@@ -1,5 +1,6 @@
 package ru.kryu.currencyexchange.data.network
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -16,10 +17,14 @@ class RetrofitNetworkClient @Inject constructor(
     override fun getExchangeRates(): Flow<ExchangeRateResponse> = flow {
         while (true) {
             val response = exchangeRateApi.getLatestRates()
-            response.body()?.let { emit(it) }
+            response.body()?.let {
+                Log.e("RetrofitNetworkClient", response.body().toString())
+                emit(it)
+            }
             delay(30_000)
         }
     }.retryWhen { cause, _ ->
+        Log.e("RetrofitNetworkClient", "retry exchangeRateApi")
         cause is Exception
     }.flowOn(Dispatchers.IO)
 }

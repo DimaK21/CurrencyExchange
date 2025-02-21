@@ -1,7 +1,8 @@
 package ru.kryu.currencyexchange.domain
 
-import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
+import ru.kryu.currencyexchange.domain.model.Currency
 
 interface ExchangeRateRepository {
-    fun getExchangeRates(currencies: List<String>): Observable<Map<String, Double>>
+    fun getExchangeRates(): Flow<Map<Currency, Double>>
 }

@@ -1,9 +1,14 @@
 package ru.kryu.currencyexchange.domain
 
-import io.reactivex.Completable
-import io.reactivex.Single
+import kotlinx.coroutines.flow.Flow
+import ru.kryu.currencyexchange.domain.model.Currency
 
 interface BalanceRepository {
-    fun getBalances(): Single<Map<String, Double>>
-    fun updateBalance(currency: String, amount: Double): Single<Boolean>
+    fun getBalances(): Flow<Map<Currency, Double>>
+    suspend fun updateBalance(
+        currencyFrom: Currency,
+        amountFrom: Double,
+        currencyTo: Currency,
+        amountTo: Double
+    )
 }
