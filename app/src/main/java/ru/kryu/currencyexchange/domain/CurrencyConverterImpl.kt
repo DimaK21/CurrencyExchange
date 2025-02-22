@@ -2,8 +2,9 @@ package ru.kryu.currencyexchange.domain
 
 import android.util.Log
 import ru.kryu.currencyexchange.domain.model.Currency
+import javax.inject.Inject
 
-class CurrencyConverterImpl(
+class CurrencyConverterImpl @Inject constructor(
     exchangeRateRepository: ExchangeRateRepository
 ) : CurrencyConverter {
 

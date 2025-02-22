@@ -1,15 +1,21 @@
 package ru.kryu.currencyexchange.di
 
 import android.content.Context
-import android.content.SharedPreferences
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
 import dagger.Module
 import dagger.Provides
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import ru.kryu.currencyexchange.data.BalanceRepositoryImpl
 import ru.kryu.currencyexchange.data.ExchangeRateRepositoryImpl
+import ru.kryu.currencyexchange.data.NetworkClient
 import ru.kryu.currencyexchange.data.network.ExchangeRateApi
+import ru.kryu.currencyexchange.data.network.RetrofitNetworkClient
 import ru.kryu.currencyexchange.domain.BalanceRepository
+import ru.kryu.currencyexchange.domain.CurrencyConverter
+import ru.kryu.currencyexchange.domain.CurrencyConverterImpl
 import ru.kryu.currencyexchange.domain.ExchangeRateRepository
 import javax.inject.Singleton
 
@@ -28,23 +34,36 @@ object AppModule {
     }
 
     @Provides
+    @Singleton
     fun provideExchangeRateApi(retrofit: Retrofit): ExchangeRateApi {
         return retrofit.create(ExchangeRateApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideSharedPreferences(context: Context): SharedPreferences {
-        return context.getSharedPreferences("balances", Context.MODE_PRIVATE)
+    fun provideDataStore(context: Context): DataStore<Preferences> {
+        return context.dataStore
     }
 
     @Provides
     @Singleton
-    fun provideExchangeRateRepository(api: ExchangeRateApi): ExchangeRateRepository =
-        ExchangeRateRepositoryImpl(api)
+    fun provideNetworkClient(api: ExchangeRateApi): NetworkClient =
+        RetrofitNetworkClient(api)
 
     @Provides
     @Singleton
-    fun provideBalanceRepository(sharedPreferences: SharedPreferences): BalanceRepository =
-        BalanceRepositoryImpl(sharedPreferences)
+    fun provideExchangeRateRepository(networkClient: NetworkClient): ExchangeRateRepository =
+        ExchangeRateRepositoryImpl(networkClient)
+
+    @Provides
+    @Singleton
+    fun provideBalanceRepository(dataStore: DataStore<Preferences>): BalanceRepository =
+        BalanceRepositoryImpl(dataStore)
+
+    @Provides
+    @Singleton
+    fun provideCurrencyConverter(exchangeRateRepository: ExchangeRateRepository): CurrencyConverter =
+        CurrencyConverterImpl(exchangeRateRepository)
 }
+
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "balances")

@@ -9,6 +9,7 @@ import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import ru.kryu.currencyexchange.domain.BalanceRepository
+import ru.kryu.currencyexchange.domain.CurrencyConverter
 import ru.kryu.currencyexchange.domain.ExchangeRateRepository
 import javax.inject.Inject
 import kotlin.math.roundToInt
@@ -16,6 +17,7 @@ import kotlin.math.roundToInt
 class MainViewModel @Inject constructor(
     private val exchangeRateRepository: ExchangeRateRepository,
     private val balanceRepository: BalanceRepository,
+    private val currencyConverter: CurrencyConverter,
 ) : ViewModel() {
 
     private val disposables = CompositeDisposable()
