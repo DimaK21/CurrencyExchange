@@ -19,10 +19,10 @@ class BalanceRepositoryImpl @Inject constructor(
         return dataStore.data
             .onStart { initBalance() }
             .map { preferences ->
-            Currency.entries.associateWith { currency ->
-                preferences[currency.name.toPreferencesKey()] ?: 100.0
+                Currency.entries.associateWith { currency ->
+                    preferences[currency.name.toPreferencesKey()] ?: 100.0
+                }
             }
-        }
     }
 
     private suspend fun initBalance() {
@@ -51,7 +51,10 @@ class BalanceRepositoryImpl @Inject constructor(
             val toKey = doublePreferencesKey(currencyTo.name)
             val currentFromBalance = preferences[fromKey] ?: 100.0
             val currentToBalance = preferences[toKey] ?: 100.0
-            preferences[fromKey] = currentFromBalance - amountFrom
+
+            if (currentFromBalance + amountFrom < 0) return@edit
+
+            preferences[fromKey] = currentFromBalance + amountFrom
             preferences[toKey] = currentToBalance + amountTo
         }
     }

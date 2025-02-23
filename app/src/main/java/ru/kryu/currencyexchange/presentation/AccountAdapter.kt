@@ -16,7 +16,7 @@ class AccountAdapter(
 ) : ListAdapter<Pair<String, Double>, AccountAdapter.AccountViewHolder>(AccountDiffCallback()) {
 
     private var convertedAmount: Double = 0.0
-    private var enteredAmounts: Map<String, Double> = emptyMap()
+    private var enteredAmounts: MutableMap<String, Double> = mutableMapOf()
 
     fun updateConversionRate(newConvertedAmount: Double) {
         convertedAmount = newConvertedAmount
@@ -26,9 +26,14 @@ class AccountAdapter(
     }
 
     fun updateEnteredAmounts(newEnteredAmounts: Map<String, Double>) {
-        enteredAmounts = newEnteredAmounts
         Handler(Looper.getMainLooper()).post {
-            notifyDataSetChanged()
+            newEnteredAmounts.forEach { (currency, amount) ->
+                val position = currentList.indexOfFirst { it.first == currency }
+                if (position != -1) {
+                    enteredAmounts[currency] = amount
+                    notifyItemChanged(position, amount)
+                }
+            }
         }
     }
 
@@ -39,7 +44,8 @@ class AccountAdapter(
 
     override fun onBindViewHolder(holder: AccountViewHolder, position: Int) {
         val (currency, balance) = getItem(position)
-        holder.bind(currency, balance, enteredAmounts[currency] ?: 0.0)
+        val enteredAmount = enteredAmounts[currency] ?: 0.0
+        holder.bind(currency, balance, enteredAmount)
     }
 
     inner class AccountViewHolder(private val binding: ItemAccountBinding) :
@@ -51,9 +57,13 @@ class AccountAdapter(
 
             if (isFromAccount) {
                 binding.etAmount.setText(enteredAmount.toString())
+
                 binding.etAmount.doAfterTextChanged { Unit }
                 binding.etAmount.doAfterTextChanged { text ->
+                    if (!binding.etAmount.hasFocus()) return@doAfterTextChanged
                     val amount = text.toString().toDoubleOrNull() ?: 0.0
+                    if (enteredAmounts[currency] == amount) return@doAfterTextChanged
+                    enteredAmounts[currency] = amount
                     onAmountEntered?.invoke(currency, amount)
                 }
             } else {

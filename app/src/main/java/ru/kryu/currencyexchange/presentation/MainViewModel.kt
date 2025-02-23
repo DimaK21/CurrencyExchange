@@ -44,23 +44,35 @@ class MainViewModel @Inject constructor(
         val stateValue = _state.value
         val fromCurrency = stateValue.currencyList.getOrNull(stateValue.positionFrom)
         val toCurrency = stateValue.currencyList.getOrNull(stateValue.positionTo)
-        val amount = stateValue.balances[fromCurrency] ?: 0.0
-        val rate = stateValue.exchangeRates[fromCurrency] ?: return
-        if (fromCurrency != null && toCurrency != null) {
-            val convertedAmount = amount * rate
-            if (amount <= 0 || amount > stateValue.balances[fromCurrency]!! || rate == 0.0) {
-                _state.update { it.copy(message = "Недостаточно средств или неверная сумма") }
-            } else {
-                viewModelScope.launch {
-                    balanceRepository.updateBalance(
-                        fromCurrency,
-                        -amount,
-                        toCurrency,
-                        convertedAmount
-                    )
-                    _state.update { it.copy(message = "Произведен обмен $amount $fromCurrency на $convertedAmount $toCurrency") }
-                }
-            }
+        val amount = stateValue.enteredAmounts[fromCurrency?.name] ?: 0.0
+
+        if (fromCurrency == null || toCurrency == null || fromCurrency == toCurrency) {
+            _state.update { it.copy(message = "Выберите разные валюты") }
+            return
+        }
+
+        val rate = currencyConverter.convert(1.0, fromCurrency, toCurrency)
+        if (rate == 0.0) {
+            _state.update { it.copy(message = "Курс обмена недоступен") }
+            return
+        }
+
+        val convertedAmount = amount * rate
+        val balanceFrom = stateValue.balances[fromCurrency] ?: 0.0
+
+        if (amount <= 0 || amount > balanceFrom) {
+            _state.update { it.copy(message = "Недостаточно средств") }
+            return
+        }
+
+        viewModelScope.launch {
+            balanceRepository.updateBalance(
+                fromCurrency,
+                -amount,
+                toCurrency,
+                convertedAmount
+            )
+            _state.update { it.copy(message = "Обмен выполнен: $amount $fromCurrency -> $convertedAmount $toCurrency") }
         }
     }
 
