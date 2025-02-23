@@ -72,7 +72,15 @@ class MainViewModel @Inject constructor(
                 toCurrency,
                 convertedAmount
             )
-            _state.update { it.copy(message = "Обмен выполнен: $amount $fromCurrency -> $convertedAmount $toCurrency") }
+            _state.update {
+                it.copy(
+                    message = "Обмен выполнен: $amount $fromCurrency -> ${
+                        "%.2f".format(
+                            convertedAmount
+                        )
+                    } $toCurrency"
+                )
+            }
         }
     }
 

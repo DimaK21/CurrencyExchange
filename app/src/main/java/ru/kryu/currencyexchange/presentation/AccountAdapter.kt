@@ -12,7 +12,8 @@ import ru.kryu.currencyexchange.databinding.ItemAccountBinding
 
 class AccountAdapter(
     private val isFromAccount: Boolean,
-    private val onAmountEntered: ((String, Double) -> Unit)? = null
+    private val recyclerView: RecyclerView,
+    private val onAmountEntered: ((String, Double) -> Unit)? = null,
 ) : ListAdapter<Pair<String, Double>, AccountAdapter.AccountViewHolder>(AccountDiffCallback()) {
 
     private var convertedAmount: Double = 0.0
@@ -58,7 +59,10 @@ class AccountAdapter(
             if (isFromAccount) {
                 binding.etAmount.setText(enteredAmount.toString())
 
-                binding.etAmount.doAfterTextChanged { Unit }
+                binding.etAmount.setOnFocusChangeListener { _, hasFocus ->
+                    recyclerView.suppressLayout(hasFocus)
+                }
+
                 binding.etAmount.doAfterTextChanged { text ->
                     if (!binding.etAmount.hasFocus()) return@doAfterTextChanged
                     val amount = text.toString().toDoubleOrNull() ?: 0.0

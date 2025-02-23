@@ -17,7 +17,7 @@ class CurrencyConverterImpl @Inject constructor(
         return if (toRate == 0.0) {
             null
         } else {
-            fromRate / toRate
+            toRate / fromRate
         }
     }
 

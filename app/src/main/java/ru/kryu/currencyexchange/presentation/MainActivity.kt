@@ -38,16 +38,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerViews() {
-        fromAccountAdapter = AccountAdapter(true) { currency, amount ->
+        fromAccountAdapter = AccountAdapter(true, binding.recyclerAccountsFrom) { currency, amount ->
             viewModel.onAmountEntered(currency, amount)
         }
-        toAccountAdapter = AccountAdapter(false)
+        toAccountAdapter = AccountAdapter(false, binding.recyclerAccountsFrom)
 
         setupRecyclerView(binding.recyclerAccountsFrom, fromAccountAdapter) { position ->
             viewModel.updatePositionFrom(position)
         }
         setupRecyclerView(binding.recyclerAccountsTo, toAccountAdapter) { position ->
             viewModel.updatePositionTo(position)
+        }
+
+        binding.recyclerAccountsFrom.setOnTouchListener { v, event ->
+            v.performClick()
+            v.clearFocus()
+            currentFocus?.clearFocus()
+            false
         }
     }
 
@@ -95,6 +102,10 @@ class MainActivity : AppCompatActivity() {
     private fun setupExchangeButton() {
         binding.btnExchange.setOnClickListener {
             viewModel.exchange()
+
+            binding.recyclerAccountsFrom.clearFocus()
+            binding.recyclerAccountsTo.clearFocus()
+            currentFocus?.clearFocus()
         }
     }
 
