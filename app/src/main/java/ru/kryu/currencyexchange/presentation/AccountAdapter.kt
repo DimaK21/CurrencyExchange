@@ -4,21 +4,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.widget.doAfterTextChanged
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import ru.kryu.currencyexchange.databinding.ItemAccountBinding
 
 class AccountAdapter(
     private val isFromAccount: Boolean,
-    private val onAmountEntered: ((String, Double) -> Unit)? = null,
-) : RecyclerView.Adapter<AccountAdapter.AccountViewHolder>() {
+    private val onAmountEntered: ((String, Double) -> Unit)? = null
+) : ListAdapter<Pair<String, Double>, AccountAdapter.AccountViewHolder>(AccountDiffCallback()) {
 
-    private var accounts: List<Pair<String, Double>> = listOf()
     private var convertedAmount: Double = 0.0
-
-    fun submitList(newAccounts: List<Pair<String, Double>>) {
-        this.accounts = newAccounts
-        notifyDataSetChanged()
-    }
 
     fun updateConversionRate(newConvertedAmount: Double) {
         this.convertedAmount = newConvertedAmount
@@ -31,11 +27,9 @@ class AccountAdapter(
     }
 
     override fun onBindViewHolder(holder: AccountViewHolder, position: Int) {
-        val (currency, balance) = accounts[position]
+        val (currency, balance) = getItem(position)
         holder.bind(currency, balance)
     }
-
-    override fun getItemCount(): Int = accounts.size
 
     inner class AccountViewHolder(private val binding: ItemAccountBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -44,16 +38,25 @@ class AccountAdapter(
             binding.tvCurrency.text = currency
             binding.tvBalance.text = "Баланс: %.2f".format(balance)
 
-            binding.etAmount.visibility = if (isFromAccount) View.VISIBLE else View.GONE
-
             if (isFromAccount) {
                 binding.etAmount.doAfterTextChanged { text ->
                     val amount = text.toString().toDoubleOrNull() ?: 0.0
                     onAmountEntered?.invoke(currency, amount)
                 }
             } else {
+                binding.etAmount.isEnabled = false
                 binding.tvBalance.text = "Баланс: %.2f (+%.2f)".format(balance, convertedAmount)
             }
         }
+    }
+}
+
+class AccountDiffCallback : DiffUtil.ItemCallback<Pair<String, Double>>() {
+    override fun areItemsTheSame(oldItem: Pair<String, Double>, newItem: Pair<String, Double>): Boolean {
+        return oldItem.first == newItem.first
+    }
+
+    override fun areContentsTheSame(oldItem: Pair<String, Double>, newItem: Pair<String, Double>): Boolean {
+        return oldItem == newItem
     }
 }

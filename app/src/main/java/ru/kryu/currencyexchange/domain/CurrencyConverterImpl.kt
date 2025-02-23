@@ -33,8 +33,8 @@ class CurrencyConverterImpl @Inject constructor(
         }
     }
 
-    override fun convert(amount: Double, from: Currency, to: Currency): Double? {
+    override fun convert(amount: Double, from: Currency, to: Currency): Double {
         val rate = getExchangeRate(from, to)
-        return if (rate != null) amount * rate else null
+        return if (rate != null) amount * rate else 0.0
     }
 }

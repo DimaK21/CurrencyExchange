@@ -7,10 +7,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
+import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.launch
 import ru.kryu.currencyexchange.App
 import ru.kryu.currencyexchange.databinding.ActivityMainBinding
 import ru.kryu.currencyexchange.di.MainViewModelFactory
@@ -25,7 +26,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var fromAccountAdapter: AccountAdapter
     private lateinit var toAccountAdapter: AccountAdapter
-    private val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         (application as App).appComponent.inject(this)
@@ -39,68 +39,61 @@ class MainActivity : AppCompatActivity() {
             insets
         }
         setupRecyclerViews()
-        observeViewModel()
+        subscribeViewModel()
         setupExchangeButton()
     }
 
     private fun setupRecyclerViews() {
         fromAccountAdapter = AccountAdapter(true) { currency, amount ->
-            viewModel.onAmountEntered(currency, amount)
+            viewModel.onAmountEntered(amount)
         }
         toAccountAdapter = AccountAdapter(false)
 
-        binding.recyclerAccountsFrom.apply {
-            layoutManager =
-                LinearLayoutManager(this@MainActivity, LinearLayoutManager.HORIZONTAL, false)
-            adapter = fromAccountAdapter
+        setupRecyclerView(binding.recyclerAccountsFrom, fromAccountAdapter) { position ->
+            viewModel.updatePositionFrom(position)
         }
-        val fromSnapHelper = PagerSnapHelper()
-        fromSnapHelper.attachToRecyclerView(binding.recyclerAccountsFrom)
-
-
-        binding.recyclerAccountsTo.apply {
-            layoutManager =
-                LinearLayoutManager(this@MainActivity, LinearLayoutManager.HORIZONTAL, false)
-            adapter = toAccountAdapter
+        setupRecyclerView(binding.recyclerAccountsTo, toAccountAdapter) { position ->
+            viewModel.updatePositionTo(position)
         }
-        val toSnapHelper = PagerSnapHelper()
-        toSnapHelper.attachToRecyclerView(binding.recyclerAccountsTo)
     }
 
-    private fun observeViewModel() {
-        compositeDisposable.addAll(
-            viewModel.exchangeRateText
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ rateText ->
-                    binding.exchangeRate.text = rateText
-                }, Throwable::printStackTrace),
+    private fun setupRecyclerView(
+        recyclerView: RecyclerView,
+        adapter: AccountAdapter,
+        onScrolledToPosition: (Int) -> Unit
+    ) {
+        recyclerView.apply {
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            this.adapter = adapter
+        }
+        PagerSnapHelper().attachToRecyclerView(recyclerView)
 
-            viewModel.convertedAmount
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ convertedAmount ->
-                    toAccountAdapter.updateConversionRate(convertedAmount)
-                }, Throwable::printStackTrace),
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                val position = layoutManager.findFirstCompletelyVisibleItemPosition()
+                if (position != RecyclerView.NO_POSITION) {
+                    onScrolledToPosition(position)
+                }
+            }
+        })
+    }
 
-            viewModel.balances
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ balances ->
-                    val accountsList = balances.entries.toList()
-                    fromAccountAdapter.submitList(accountsList.map { it.key to it.value })
-                    toAccountAdapter.submitList(accountsList.map { it.key to it.value })
-                }, Throwable::printStackTrace),
-
-            viewModel.getExchangeResult()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ message ->
-                    showExchangeResultDialog(message)
-                }, Throwable::printStackTrace)
-        )
+    private fun subscribeViewModel() {
+        lifecycleScope.launch {
+            viewModel.state.collect { state ->
+                fromAccountAdapter.submitList(state.balances.entries.map { it.key.name to it.value })
+                toAccountAdapter.submitList(state.balances.entries.map { it.key.name to it.value })
+                binding.exchangeRate.text = "1${
+                    state.currencyList.getOrNull(state.positionFrom) ?: ""
+                } = ${state.exchangeRate}${state.currencyList.getOrNull(state.positionTo) ?: ""}"
+            }
+        }
     }
 
     private fun setupExchangeButton() {
-        binding.btnExchange.setOnClickListener {
-            viewModel.exchange()
-        }
+        viewModel.exchange()
     }
 
     private fun showExchangeResultDialog(message: String) {
@@ -109,10 +102,5 @@ class MainActivity : AppCompatActivity() {
             .setMessage(message)
             .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
             .show()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        compositeDisposable.clear()
     }
 }

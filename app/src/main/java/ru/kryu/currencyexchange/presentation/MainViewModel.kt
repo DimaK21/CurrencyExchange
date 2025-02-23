@@ -1,18 +1,16 @@
 package ru.kryu.currencyexchange.presentation
 
 import androidx.lifecycle.ViewModel
-import io.reactivex.Observable
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.functions.BiFunction
-import io.reactivex.schedulers.Schedulers
-import io.reactivex.subjects.BehaviorSubject
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import ru.kryu.currencyexchange.domain.BalanceRepository
 import ru.kryu.currencyexchange.domain.CurrencyConverter
 import ru.kryu.currencyexchange.domain.ExchangeRateRepository
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 class MainViewModel @Inject constructor(
     private val exchangeRateRepository: ExchangeRateRepository,
@@ -20,92 +18,76 @@ class MainViewModel @Inject constructor(
     private val currencyConverter: CurrencyConverter,
 ) : ViewModel() {
 
-    private val disposables = CompositeDisposable()
-
-    private val selectedFromCurrency = BehaviorSubject.createDefault("USD")
-    private val selectedToCurrency = BehaviorSubject.createDefault("EUR")
-    private val enteredAmount = BehaviorSubject.createDefault(0.0)
-    private val exchangeResult = BehaviorSubject.createDefault("")
-
-    private val balancesSubject = BehaviorSubject.create<Map<String, Double>>()
-    val balances: Observable<Map<String, Double>> = balancesSubject.hide()
-    private val list = listOf("USD","EUR","GBP")
+    private val _state = MutableStateFlow(ScreenState())
+    val state: StateFlow<ScreenState> = _state.asStateFlow()
 
     init {
-        disposables.add(
-            balanceRepository.getBalances()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ balancesSubject.onNext(it) }, Throwable::printStackTrace)
-        )
-    }
-
-    fun getExchangeResult(): Observable<String> = exchangeResult.hide()
-
-    val exchangeRateText: Observable<String> = Observable.combineLatest(
-        selectedFromCurrency,
-        selectedToCurrency,
-        exchangeRateRepository.getExchangeRates(list)
-    ) { from, to, rates ->
-        "1 $from = ${rates[to] ?: 1.0} $to"
-    }.subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread())
-
-    val convertedAmount: Observable<Double> = Observable.combineLatest(
-        enteredAmount,
-        selectedFromCurrency,
-        selectedToCurrency,
-        exchangeRateRepository.getExchangeRates(list)
-    ) { amount, from, to, rates ->
-        val rate = rates[to] ?: 1.0
-        (amount * rate).roundToInt().toDouble()
-    }.subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread())
-
-    fun onAmountEntered(currency: String, amount: Double) {
-        enteredAmount.onNext(amount)
-    }
-
-    fun setFromCurrency(currency: String) {
-        selectedFromCurrency.onNext(currency)
-    }
-
-    fun setToCurrency(currency: String) {
-        selectedToCurrency.onNext(currency)
+        viewModelScope.launch {
+            balanceRepository.getBalances().collect { map ->
+                _state.update { it.copy(balances = map) }
+            }
+        }
+        viewModelScope.launch {
+            exchangeRateRepository.getExchangeRates().collect { map ->
+                _state.update { it.copy(exchangeRates = map) }
+            }
+        }
     }
 
     fun exchange() {
-        disposables.add(
-            Single.zip(
-                balanceRepository.getBalances().subscribeOn(Schedulers.io()),
-                exchangeRateRepository.getExchangeRates(list).firstOrError().subscribeOn(Schedulers.io()),
-                BiFunction { balances: Map<String, Double>, rates: Map<String, Double> ->
-                    val fromCurrency = selectedFromCurrency.blockingFirst()
-                    val toCurrency = selectedToCurrency.blockingFirst()
-                    val amount = enteredAmount.blockingFirst()
-                    val rate = rates[toCurrency] ?: 1.0
-                    val converted = amount * rate
-
-                    val fromBalance = balances[fromCurrency] ?: 0.0
-                    val toBalance = balances[toCurrency] ?: 0.0
-
-                    if (amount > fromBalance) {
-                        "Недостаточно средств на счёте!"
-                    } else {
-                        balanceRepository.updateBalance(fromCurrency, fromBalance - amount)
-                        balanceRepository.updateBalance(toCurrency, toBalance + converted)
-                        "Обмен выполнен:\n-$amount $fromCurrency\n+$converted $toCurrency"
-                    }
+        val stateValue = _state.value
+        val fromCurrency = stateValue.currencyList.getOrNull(stateValue.positionFrom)
+        val toCurrency = stateValue.currencyList.getOrNull(stateValue.positionTo)
+        val amount = stateValue.balances[fromCurrency] ?: 0.0
+        val rate = stateValue.exchangeRates[fromCurrency] ?: return
+        if (fromCurrency != null && toCurrency != null) {
+            val convertedAmount = amount * rate
+            if (amount <= 0 || amount > stateValue.balances[fromCurrency]!! || rate == 0.0) {
+                return // TODO: показать диалог об ошибке
+            } else {
+                viewModelScope.launch {
+                    balanceRepository.updateBalance(
+                        fromCurrency,
+                        -amount,
+                        toCurrency,
+                        convertedAmount
+                    )
                 }
-            )
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ message -> exchangeResult.onNext(message) }, Throwable::printStackTrace)
-        )
+            }
+        }
     }
 
-    override fun onCleared() {
-        disposables.clear()
-        super.onCleared()
+    fun updatePositionFrom(position: Int) {
+        _state.update { it.copy(positionFrom = position) }
+        recalculate()
+    }
+
+    fun updatePositionTo(position: Int) {
+        _state.update { it.copy(positionTo = position) }
+        recalculate()
+    }
+
+    fun onAmountEntered(amount: Double) {
+        _state.update { it.copy(enteredAmount = amount) }
+        recalculate()
+    }
+
+    private fun recalculate() {
+        val stateValue = _state.value
+        val fromCurrency = stateValue.currencyList.getOrNull(stateValue.positionFrom)
+        val toCurrency = stateValue.currencyList.getOrNull(stateValue.positionTo)
+        val amount = stateValue.enteredAmount
+        if (fromCurrency != null && toCurrency != null) {
+            val exchangeRate = currencyConverter.convert(1.0, fromCurrency, toCurrency)
+            val convertedAmount = currencyConverter.convert(amount, fromCurrency, toCurrency)
+            _state.update {
+                it.copy(
+                    convertedAmount = convertedAmount,
+                    exchangeRate = exchangeRate
+                )
+            }
+        } else {
+            _state.update { it.copy(convertedAmount = 0.0, exchangeRate = 0.0) }
+        }
     }
 }
