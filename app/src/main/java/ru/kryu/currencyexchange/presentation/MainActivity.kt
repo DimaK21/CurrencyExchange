@@ -86,11 +86,16 @@ class MainActivity : AppCompatActivity() {
             viewModel.state.collect { state ->
                 fromAccountAdapter.submitList(state.balances.entries.map { it.key.name to it.value })
                 toAccountAdapter.submitList(state.balances.entries.map { it.key.name to it.value })
+
                 fromAccountAdapter.updateConversionRate(state.convertedAmount)
+                toAccountAdapter.updateConversionRate(state.convertedAmount)
+
                 fromAccountAdapter.updateEnteredAmounts(state.enteredAmounts)
+
                 binding.exchangeRate.text = "1${
                     state.currencyList.getOrNull(state.positionFrom) ?: ""
                 } = ${"%.2f".format(state.exchangeRate)}${state.currencyList.getOrNull(state.positionTo) ?: ""}"
+
                 if (state.message != null) {
                     showExchangeResultDialog(state.message)
                     viewModel.clearErrorMessage()

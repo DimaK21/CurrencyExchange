@@ -72,7 +72,8 @@ class AccountAdapter(
                 }
             } else {
                 binding.etAmount.isEnabled = false
-                binding.tvBalance.text = "Баланс: %.2f (+%.2f)".format(balance, convertedAmount)
+                binding.etAmount.setText(if (convertedAmount > 0) "%.2f".format(convertedAmount) else "0.0")
+                binding.tvBalance.text = "Баланс: %.2f".format(balance)
             }
         }
     }

@@ -96,9 +96,12 @@ class MainViewModel @Inject constructor(
 
     fun onAmountEntered(currency: String, amount: Double) {
         _state.update { currentState ->
-            currentState.copy(enteredAmounts = currentState.enteredAmounts.toMutableMap().apply {
-                put(currency, amount)
-            })
+            currentState.copy(
+                enteredAmounts = currentState.enteredAmounts.toMutableMap().apply {
+                    put(currency, amount)
+                },
+                enteredAmount = amount
+            )
         }
         recalculate()
     }
