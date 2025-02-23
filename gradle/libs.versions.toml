@@ -12,7 +12,6 @@ constraintlayout = "2.2.0"
 retrofit = "2.11.0"
 dagger = "2.55"
 ksp = "1.9.24-1.0.20"
-rxjava = "2.1.1"
 datastore = "1.1.2"
 lifecycle = "2.8.7"
 
@@ -29,7 +28,6 @@ squareup-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", versi
 retrofit-converter = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 dagger = { group = "com.google.dagger", name = "dagger", version.ref = "dagger" }
 dagger-compiler = { group = "com.google.dagger", name = "dagger-compiler", version.ref = "dagger" }
-rxjava2 = { group = "io.reactivex.rxjava2", name = "rxandroid", version.ref = "rxjava" }
 androidx-datastore = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
