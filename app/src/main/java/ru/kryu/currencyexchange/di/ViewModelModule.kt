@@ -1,10 +1,11 @@
 package ru.kryu.currencyexchange.di
 
+import android.content.Context
 import dagger.Module
 import dagger.Provides
-import ru.kryu.currencyexchange.domain.BalanceRepository
-import ru.kryu.currencyexchange.domain.CurrencyConverter
-import ru.kryu.currencyexchange.domain.ExchangeRateRepository
+import ru.kryu.currencyexchange.domain.api.BalanceRepository
+import ru.kryu.currencyexchange.domain.api.CurrencyConverter
+import ru.kryu.currencyexchange.domain.api.ExchangeRateRepository
 import javax.inject.Provider
 
 @Module
@@ -14,7 +15,13 @@ object ViewModelModule {
         exchangeRateRepository: Provider<ExchangeRateRepository>,
         balanceRepository: Provider<BalanceRepository>,
         currencyConverter: Provider<CurrencyConverter>,
+        context: Provider<Context>,
     ): MainViewModelFactory {
-        return MainViewModelFactory(exchangeRateRepository, balanceRepository, currencyConverter)
+        return MainViewModelFactory(
+            exchangeRateRepository,
+            balanceRepository,
+            currencyConverter,
+            context
+        )
     }
 }

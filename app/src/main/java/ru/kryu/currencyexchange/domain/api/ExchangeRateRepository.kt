@@ -1,4 +1,4 @@
-package ru.kryu.currencyexchange.domain
+package ru.kryu.currencyexchange.domain.api
 
 import kotlinx.coroutines.flow.StateFlow
 import ru.kryu.currencyexchange.domain.model.Currency

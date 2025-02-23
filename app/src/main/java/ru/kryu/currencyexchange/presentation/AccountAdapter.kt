@@ -8,6 +8,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import ru.kryu.currencyexchange.R
 import ru.kryu.currencyexchange.databinding.ItemAccountBinding
 
 class AccountAdapter(
@@ -54,7 +55,8 @@ class AccountAdapter(
 
         fun bind(currency: String, balance: Double, enteredAmount: Double) {
             binding.tvCurrency.text = currency
-            binding.tvBalance.text = "Баланс: %.2f".format(balance)
+            binding.tvBalance.text =
+                binding.root.context.getString(R.string.balance).format(balance)
 
             if (isFromAccount) {
                 binding.etAmount.setText(enteredAmount.toString())
@@ -73,7 +75,6 @@ class AccountAdapter(
             } else {
                 binding.etAmount.isEnabled = false
                 binding.etAmount.setText(if (convertedAmount > 0) "%.2f".format(convertedAmount) else "0.0")
-                binding.tvBalance.text = "Баланс: %.2f".format(balance)
             }
         }
     }

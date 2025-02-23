@@ -13,10 +13,10 @@ import ru.kryu.currencyexchange.data.ExchangeRateRepositoryImpl
 import ru.kryu.currencyexchange.data.NetworkClient
 import ru.kryu.currencyexchange.data.network.ExchangeRateApi
 import ru.kryu.currencyexchange.data.network.RetrofitNetworkClient
-import ru.kryu.currencyexchange.domain.BalanceRepository
-import ru.kryu.currencyexchange.domain.CurrencyConverter
-import ru.kryu.currencyexchange.domain.CurrencyConverterImpl
-import ru.kryu.currencyexchange.domain.ExchangeRateRepository
+import ru.kryu.currencyexchange.domain.api.BalanceRepository
+import ru.kryu.currencyexchange.domain.api.CurrencyConverter
+import ru.kryu.currencyexchange.domain.impl.CurrencyConverterImpl
+import ru.kryu.currencyexchange.domain.api.ExchangeRateRepository
 import javax.inject.Singleton
 
 @Module

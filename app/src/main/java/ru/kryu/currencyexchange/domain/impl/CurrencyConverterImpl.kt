@@ -1,5 +1,7 @@
-package ru.kryu.currencyexchange.domain
+package ru.kryu.currencyexchange.domain.impl
 
+import ru.kryu.currencyexchange.domain.api.CurrencyConverter
+import ru.kryu.currencyexchange.domain.api.ExchangeRateRepository
 import ru.kryu.currencyexchange.domain.model.Currency
 import javax.inject.Inject
 

@@ -7,7 +7,7 @@ import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import ru.kryu.currencyexchange.domain.BalanceRepository
+import ru.kryu.currencyexchange.domain.api.BalanceRepository
 import ru.kryu.currencyexchange.domain.model.Currency
 import javax.inject.Inject
 

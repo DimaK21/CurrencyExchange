@@ -1,18 +1,16 @@
 package ru.kryu.currencyexchange.presentation
 
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.launch
 import ru.kryu.currencyexchange.App
+import ru.kryu.currencyexchange.R
 import ru.kryu.currencyexchange.databinding.ActivityMainBinding
 import ru.kryu.currencyexchange.di.MainViewModelFactory
 import javax.inject.Inject
@@ -38,9 +36,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerViews() {
-        fromAccountAdapter = AccountAdapter(true, binding.recyclerAccountsFrom) { currency, amount ->
-            viewModel.onAmountEntered(currency, amount)
-        }
+        fromAccountAdapter =
+            AccountAdapter(true, binding.recyclerAccountsFrom) { currency, amount ->
+                viewModel.onAmountEntered(currency, amount)
+            }
         toAccountAdapter = AccountAdapter(false, binding.recyclerAccountsFrom)
 
         setupRecyclerView(binding.recyclerAccountsFrom, fromAccountAdapter) { position ->
@@ -50,7 +49,7 @@ class MainActivity : AppCompatActivity() {
             viewModel.updatePositionTo(position)
         }
 
-        binding.recyclerAccountsFrom.setOnTouchListener { v, event ->
+        binding.recyclerAccountsFrom.setOnTouchListener { v, _ ->
             v.performClick()
             v.clearFocus()
             currentFocus?.clearFocus()
@@ -92,9 +91,12 @@ class MainActivity : AppCompatActivity() {
 
                 fromAccountAdapter.updateEnteredAmounts(state.enteredAmounts)
 
-                binding.exchangeRate.text = "1${
-                    state.currencyList.getOrNull(state.positionFrom) ?: ""
-                } = ${"%.2f".format(state.exchangeRate)}${state.currencyList.getOrNull(state.positionTo) ?: ""}"
+                binding.exchangeRate.text = getString(
+                    R.string.exchange_rate,
+                    state.currencyList.getOrNull(state.positionFrom) ?: "",
+                    "%.2f".format(state.exchangeRate),
+                    state.currencyList.getOrNull(state.positionTo) ?: ""
+                )
 
                 if (state.message != null) {
                     showExchangeResultDialog(state.message)
@@ -117,9 +119,9 @@ class MainActivity : AppCompatActivity() {
     private fun showExchangeResultDialog(message: String) {
         if (message.isBlank()) return
         AlertDialog.Builder(this)
-            .setTitle("Обмен валют")
+            .setTitle(getString(R.string.currency_exchange))
             .setMessage(message)
-            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+            .setPositiveButton(getString(R.string.ok)) { dialog, _ -> dialog.dismiss() }
             .show()
     }
 }

@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import ru.kryu.currencyexchange.domain.ExchangeRateRepository
+import ru.kryu.currencyexchange.domain.api.ExchangeRateRepository
 import ru.kryu.currencyexchange.domain.model.Currency
 import javax.inject.Inject
 

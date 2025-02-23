@@ -1,5 +1,6 @@
 package ru.kryu.currencyexchange.presentation
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -7,15 +8,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import ru.kryu.currencyexchange.domain.BalanceRepository
-import ru.kryu.currencyexchange.domain.CurrencyConverter
-import ru.kryu.currencyexchange.domain.ExchangeRateRepository
+import ru.kryu.currencyexchange.R
+import ru.kryu.currencyexchange.domain.api.BalanceRepository
+import ru.kryu.currencyexchange.domain.api.CurrencyConverter
+import ru.kryu.currencyexchange.domain.api.ExchangeRateRepository
 import javax.inject.Inject
 
 class MainViewModel @Inject constructor(
     private val exchangeRateRepository: ExchangeRateRepository,
     private val balanceRepository: BalanceRepository,
     private val currencyConverter: CurrencyConverter,
+    private val context: Context
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ScreenState())
@@ -47,13 +50,13 @@ class MainViewModel @Inject constructor(
         val amount = stateValue.enteredAmounts[fromCurrency?.name] ?: 0.0
 
         if (fromCurrency == null || toCurrency == null || fromCurrency == toCurrency) {
-            _state.update { it.copy(message = "Выберите разные валюты") }
+            _state.update { it.copy(message = context.getString(R.string.select_different_currencies)) }
             return
         }
 
         val rate = currencyConverter.convert(1.0, fromCurrency, toCurrency)
         if (rate == 0.0) {
-            _state.update { it.copy(message = "Курс обмена недоступен") }
+            _state.update { it.copy(message = context.getString(R.string.exchange_rate_not_available)) }
             return
         }
 
@@ -61,7 +64,7 @@ class MainViewModel @Inject constructor(
         val balanceFrom = stateValue.balances[fromCurrency] ?: 0.0
 
         if (amount <= 0 || amount > balanceFrom) {
-            _state.update { it.copy(message = "Недостаточно средств") }
+            _state.update { it.copy(message = context.getString(R.string.insufficient_funds)) }
             return
         }
 
@@ -74,11 +77,13 @@ class MainViewModel @Inject constructor(
             )
             _state.update {
                 it.copy(
-                    message = "Обмен выполнен: $amount $fromCurrency -> ${
-                        "%.2f".format(
-                            convertedAmount
-                        )
-                    } $toCurrency"
+                    message = context.getString(
+                        R.string.exchange_completed,
+                        "%.2f".format(amount),
+                        fromCurrency,
+                        "%.2f".format(convertedAmount),
+                        toCurrency
+                    )
                 )
             }
         }
