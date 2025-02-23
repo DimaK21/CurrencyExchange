@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupRecyclerViews() {
         fromAccountAdapter = AccountAdapter(true) { currency, amount ->
-            viewModel.onAmountEntered(amount)
+            viewModel.onAmountEntered(currency, amount)
         }
         toAccountAdapter = AccountAdapter(false)
 
@@ -85,15 +85,23 @@ class MainActivity : AppCompatActivity() {
             viewModel.state.collect { state ->
                 fromAccountAdapter.submitList(state.balances.entries.map { it.key.name to it.value })
                 toAccountAdapter.submitList(state.balances.entries.map { it.key.name to it.value })
+                fromAccountAdapter.updateConversionRate(state.convertedAmount)
+                fromAccountAdapter.updateEnteredAmounts(state.enteredAmounts)
                 binding.exchangeRate.text = "1${
                     state.currencyList.getOrNull(state.positionFrom) ?: ""
-                } = ${state.exchangeRate}${state.currencyList.getOrNull(state.positionTo) ?: ""}"
+                } = ${"%.2f".format(state.exchangeRate)}${state.currencyList.getOrNull(state.positionTo) ?: ""}"
+                if (state.message != null) {
+                    showExchangeResultDialog(state.message)
+                    viewModel.clearErrorMessage()
+                }
             }
         }
     }
 
     private fun setupExchangeButton() {
-        viewModel.exchange()
+        binding.btnExchange.setOnClickListener {
+            viewModel.exchange()
+        }
     }
 
     private fun showExchangeResultDialog(message: String) {

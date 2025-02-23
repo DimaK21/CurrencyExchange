@@ -11,4 +11,6 @@ data class ScreenState(
     val exchangeRate: Double = 0.0,
     val enteredAmount: Double = 0.0,
     val convertedAmount: Double = 0.0,
+    val enteredAmounts: Map<String, Double> = emptyMap(),
+    val message: String? = null
 )

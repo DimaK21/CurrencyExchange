@@ -24,6 +24,7 @@ class ExchangeRateRepositoryImpl @Inject constructor(
                     Currency.EUR to (value.rates.eur ?: 0.0),
                     Currency.USD to (value.rates.usd ?: 0.0),
                     Currency.GBP to (value.rates.gbp ?: 0.0),
+                    Currency.RUB to 1.0,
                 )
             }
             .stateIn(

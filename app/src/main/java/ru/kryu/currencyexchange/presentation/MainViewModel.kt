@@ -24,7 +24,13 @@ class MainViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             balanceRepository.getBalances().collect { map ->
-                _state.update { it.copy(balances = map) }
+                _state.update {
+                    it.copy(
+                        balances = map,
+                        currencyList = map.keys.toList()
+                    )
+                }
+                recalculate()
             }
         }
         viewModelScope.launch {
@@ -43,7 +49,7 @@ class MainViewModel @Inject constructor(
         if (fromCurrency != null && toCurrency != null) {
             val convertedAmount = amount * rate
             if (amount <= 0 || amount > stateValue.balances[fromCurrency]!! || rate == 0.0) {
-                return // TODO: показать диалог об ошибке
+                _state.update { it.copy(message = "Недостаточно средств или неверная сумма") }
             } else {
                 viewModelScope.launch {
                     balanceRepository.updateBalance(
@@ -52,6 +58,7 @@ class MainViewModel @Inject constructor(
                         toCurrency,
                         convertedAmount
                     )
+                    _state.update { it.copy(message = "Произведен обмен $amount $fromCurrency на $convertedAmount $toCurrency") }
                 }
             }
         }
@@ -67,8 +74,12 @@ class MainViewModel @Inject constructor(
         recalculate()
     }
 
-    fun onAmountEntered(amount: Double) {
-        _state.update { it.copy(enteredAmount = amount) }
+    fun onAmountEntered(currency: String, amount: Double) {
+        _state.update { currentState ->
+            currentState.copy(enteredAmounts = currentState.enteredAmounts.toMutableMap().apply {
+                put(currency, amount)
+            })
+        }
         recalculate()
     }
 
@@ -89,5 +100,9 @@ class MainViewModel @Inject constructor(
         } else {
             _state.update { it.copy(convertedAmount = 0.0, exchangeRate = 0.0) }
         }
+    }
+
+    fun clearErrorMessage() {
+        _state.update { it.copy(message = null) }
     }
 }
