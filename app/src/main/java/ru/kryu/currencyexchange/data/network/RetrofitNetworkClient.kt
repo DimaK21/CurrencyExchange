@@ -25,6 +25,7 @@ class RetrofitNetworkClient @Inject constructor(
         }
     }.retryWhen { cause, _ ->
         Log.e("RetrofitNetworkClient", "retry exchangeRateApi")
+        delay(10_000)
         cause is Exception
     }.flowOn(Dispatchers.IO)
 }

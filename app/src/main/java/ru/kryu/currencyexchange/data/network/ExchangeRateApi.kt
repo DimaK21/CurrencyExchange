@@ -5,5 +5,5 @@ import retrofit2.http.GET
 
 interface ExchangeRateApi {
     @GET("latest.js")
-    fun getLatestRates(): Response<ExchangeRateResponse>
+    suspend fun getLatestRates(): Response<ExchangeRateResponse>
 }
